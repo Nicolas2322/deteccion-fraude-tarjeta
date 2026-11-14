@@ -76,11 +76,15 @@ def _xgboost(semilla: int, **kw: Any):
     return XGBClassifier(**parametros)
 
 
-def _ft_transformer(semilla: int, **kw: Any):  # pragma: no cover - fase siguiente
-    raise ModeloNoDisponible(
-        "FT-Transformer se incorpora en la fase de selección; requiere PyTorch. "
-        "La interfaz ya está prevista para que el resto del pipeline no cambie."
-    )
+def _ft_transformer(semilla: int, **kw: Any):
+    try:
+        from .ft_transformer import FTTransformer
+    except ImportError as exc:  # pragma: no cover - depende del entorno
+        raise ModeloNoDisponible("Falta torch: pip install torch") from exc
+
+    parametros: dict[str, Any] = dict(semilla=semilla)
+    parametros.update(kw)
+    return FTTransformer(**parametros)
 
 
 _FABRICAS = {
