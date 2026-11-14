@@ -158,7 +158,7 @@ La prevalencia del fraude no es uniforme en el periodo: 0,183 % en el tramo de
 desarrollo y 0,132 % en el tramo de prueba. Por eso cada AUPRC se reporta junto
 a su propia línea base.
 
-### Por qué LightGBM no reponderara la clase minoritaria
+### Por qué LightGBM no repondera la clase minoritaria
 
 Activar `is_unbalance` saturaba las probabilidades: 3.013 transacciones del
 tramo de prueba empatadas en exactamente 1,0, AUPRC de 0,0147 frente a 0,7719
