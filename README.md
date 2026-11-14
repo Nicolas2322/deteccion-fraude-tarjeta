@@ -138,42 +138,78 @@ El proyecto pone esa predicción a prueba.
 ## Resultados medidos
 
 Ejecución sobre el archivo real, costo de alerta falsa igual a cinco. Los
-informes completos están en `informes/`, generados por el propio pipeline.
+informes completos están en `informes/` y las figuras en `figuras/`, generados
+por el propio pipeline.
 
-| | Regresión logística | LightGBM |
-|---|---|---|
-| AUPRC, validación cruzada | 0,7289 | 0,4493 |
-| AUPRC, prueba temporal | 0,7576 | 0,7719 |
-| AUPRC de la línea base en prueba | 0,0013 | 0,0013 |
-| ROC-AUC, prueba temporal | 0,9856 | 0,9806 |
-| Error de calibración, prueba temporal | 0,1109 | 0,0006 |
-| Fraudes detectados en prueba (de 75) | 55 | 50 |
-| Alertas falsas en prueba | 19 | 8 |
-| Costo total en prueba | 2.982,13 | 2.727,14 |
+| | Logística | LightGBM | Perceptrón | FT-Transformer |
+|---|---|---|---|---|
+| AUPRC, validación cruzada | 0,7289 | 0,7943 | 0,8335 | 0,6998 |
+| AUPRC, prueba temporal | 0,7576 | 0,6663 | **0,8175** | 0,7949 |
+| ROC-AUC, prueba temporal | 0,9856 | 0,8916 | 0,9678 | 0,9703 |
+| Error de calibración | 0,1109 | 0,0009 | 0,0008 | **0,0004** |
+| Fraudes detectados (de 75) | 55 | 50 | **59** | 53 |
+| Alertas falsas | 19 | 62 | 20 | **11** |
+| Costo total | 2.982 | 2.735 | **2.499** | 3.978 |
 
-Ningún modelo ha recibido todavía búsqueda de hiperparámetros, de modo que la
-comparación no es concluyente.
+La línea base del AUPRC en el tramo de prueba es 0,0013.
 
-La prevalencia del fraude no es uniforme en el periodo: 0,183 % en el tramo de
-desarrollo y 0,132 % en el tramo de prueba. Por eso cada AUPRC se reporta junto
-a su propia línea base.
+Las dos arquitecturas neuronales superan a la familia de árboles. El orden es
+contrario al habitual en datos tabulares, y era previsible: Grinsztajn et al.
+(2022) predicen que la ventaja de los árboles se reduce sobre datos rotados, y
+V1–V28 son componentes principales, es decir, exactamente una rotación.
 
-### Por qué LightGBM no repondera la clase minoritaria
+**Ninguna de estas cifras procede de una búsqueda de hiperparámetros.** Valen
+como pruebas iniciales, no como resultado final. La razón para posponer esa
+búsqueda está justo debajo.
+
+## Una cifra única de AUPRC no es reproducible aquí
+
+`scripts/estabilidad.py` entrena seis veces sobre submuestras aleatorias del
+80 % del tramo de desarrollo y evalúa siempre sobre el mismo tramo de prueba.
+Lo único que cambia entre repeticiones es qué filas vio el modelo; los ajustes
+son deterministas, y hay una prueba que lo comprueba.
+
+| Configuración | Media | Desviación | Rango |
+|---|---|---|---|
+| LightGBM, 500 árboles, 31 hojas | 0,3904 | 0,2813 | [0,1381 – 0,8209] |
+| LightGBM, 200 árboles, 15 hojas, mín. 50 por hoja | 0,7014 | 0,0427 | [0,6472 – 0,7497] |
+| Regresión logística | 0,7543 | 0,0102 | [0,7414 – 0,7699] |
+| Perceptrón multicapa | 0,8179 | 0,0052 | [0,8103 – 0,8236] |
+
+El ensamble profundo puede dar el peor o el mejor AUPRC de todo el estudio sin
+que nada cambie salvo la submuestra. Con 417 fraudes en el tramo de desarrollo,
+quitar al azar un 20 % de las filas se lleva unos 83 de ellos, y un ensamble de
+500 árboles con 31 hojas tiene capacidad de sobra para memorizar casos concretos
+en lugar de aprender regularidades.
+
+Consecuencias, ya aplicadas:
+
+1. **LightGBM va regularizado por defecto** (200 árboles, 15 hojas, mínimo 50
+   observaciones por hoja). La media sube de 0,3904 a 0,7014 y la desviación
+   baja de 0,2813 a 0,0427. Restringir más vuelve a empeorar ambas.
+2. **El informe final reportará media, desviación y rango**, no cifras únicas.
+3. **La búsqueda de hiperparámetros espera** a que la medición sea estable:
+   buscar sobre una puntuación con desviación de 0,28 seleccionaría la
+   configuración más afortunada, no la mejor.
+
+El ROC-AUC de la configuración inestable sobre el tramo de prueba era 0,8916 y
+la exactitud rondaba el 99,8 %. Solo el AUPRC delató el problema.
+
+## Por qué LightGBM no repondera la clase minoritaria
 
 Activar `is_unbalance` saturaba las probabilidades: 3.013 transacciones del
 tramo de prueba empatadas en exactamente 1,0, AUPRC de 0,0147 frente a 0,7719
 sin reponderación, y exhaustividad nula porque el umbral por costo no encontraba
-ningún corte dentro del empate. El daño era invisible para la exactitud (99,8 %)
-y casi invisible para el ROC-AUC (0,854). Es el efecto que describen Dal Pozzolo
-et al. (2015): reponderar desplaza la probabilidad, y aquí la colapsó.
+ningún corte dentro del empate. Es el efecto que describen Dal Pozzolo et al.
+(2015): reponderar desplaza la probabilidad, y aquí la colapsó.
 
 ## Estado
 
-Fase de pipeline completada y ejecutada sobre el archivo real: recolección,
-validación, preprocesamiento, particionamiento, umbral, métricas y orquestación,
-con dos modelos de familias distintas funcionando de extremo a extremo.
-Pendientes la red neuronal tabular, FT-Transformer, la búsqueda de
-hiperparámetros común y el análisis comparativo final.
+Pipeline completo y ejecutado sobre el archivo real con cuatro modelos de tres
+familias. FT-Transformer implementado desde cero en PyTorch (tokenizador por
+variable, token `[CLS]`, bloques pre-norma con ReGLU). Pendientes la búsqueda de
+hiperparámetros con presupuesto común sobre el protocolo de repeticiones, la
+medida de estabilidad del FT-Transformer y el análisis comparativo final.
 
 ## Referencias
 

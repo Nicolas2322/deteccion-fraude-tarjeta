@@ -23,6 +23,7 @@ from fraude.datos import cargar, particion_temporal  # noqa: E402
 from fraude.metricas import auprc, error_calibracion, roc_auc  # noqa: E402
 
 plt.rcParams["font.family"] = "serif"
+plt.rcParams["font.size"] = 11
 plt.rcParams["font.serif"] = ["Times New Roman", "Liberation Serif", "DejaVu Serif"]
 
 ETIQUETAS = {
@@ -93,7 +94,7 @@ def main() -> None:
         raise SystemExit("No hay predicciones en la caché. Ejecuta antes scripts/evaluar.py.")
 
     # --- Figura: curvas de precisión y exhaustividad -----------------------
-    fig, ax = plt.subplots(1, 2, figsize=(9.0, 3.5), dpi=200)
+    fig, ax = plt.subplots(1, 2, figsize=(9.0, 3.9), dpi=200)
     base = y.mean()
     for modelo, p in predicciones.items():
         exh, pre = curva_pr(y, p)
@@ -107,19 +108,17 @@ def main() -> None:
         a.xaxis.set_major_formatter(COMA)
         a.yaxis.set_major_formatter(COMA)
     ax[0].set_ylabel("Precisión")
-    ax[0].set_title("a) Curva completa", fontsize=9.5)
-    ax[0].text(0.98, base + 0.035, f"línea base: {base:.4f}".replace(".", ","),
-               fontsize=6.6, color="#777777", ha="right")
+    ax[0].set_title("a) Curva completa", fontsize=13.1)
     ax[1].set_xlim(0, 0.9)
     ax[1].set_ylim(0.4, 1.02)
-    ax[1].set_title("b) Zona de operación", fontsize=9.5)
-    ax[0].legend(fontsize=6.8, loc="lower left", frameon=False)
+    ax[1].set_title("b) Zona de operación", fontsize=13.1)
+    ax[0].legend(fontsize=9.4, loc="lower left", frameon=False)
     fig.tight_layout(pad=0.6)
     fig.savefig(args.salida / "curvas_pr.png")
     plt.close(fig)
 
     # --- Figura: calibración ------------------------------------------------
-    fig, ax = plt.subplots(1, 2, figsize=(9.0, 3.4), dpi=200)
+    fig, ax = plt.subplots(1, 2, figsize=(9.0, 3.8), dpi=200)
     for modelo, p in predicciones.items():
         xs, ys = diagrama_calibracion(y, p)
         ax[0].plot(xs, ys, marker="o", ms=3.4, **ESTILOS[modelo], label=ETIQUETAS[modelo])
@@ -129,8 +128,8 @@ def main() -> None:
     ax[0].set_yscale("log")
     ax[0].set_xlabel("Probabilidad predicha media del cubo")
     ax[0].set_ylabel("Frecuencia observada")
-    ax[0].set_title("a) Diagrama de calibración", fontsize=9.5)
-    ax[0].legend(fontsize=6.8, loc="lower right", frameon=False)
+    ax[0].set_title("a) Diagrama de calibración", fontsize=13.1)
+    ax[0].legend(fontsize=9.4, loc="lower right", frameon=False)
 
     nombres = list(predicciones)
     valores = [error_calibracion(y, predicciones[m]) for m in nombres]
@@ -138,20 +137,20 @@ def main() -> None:
                         color=["#dddddd" if v > 0.01 else "#555555" for v in valores],
                         ec="#333333", lw=0.9, height=0.55)
     ax[1].bar_label(barras, labels=[f"{v:.4f}".replace(".", ",") for v in valores],
-                    fontsize=7.2, padding=3)
+                    fontsize=9.9, padding=3)
     ax[1].set_xlabel("Error de calibración esperado")
     ax[1].set_xlim(0, max(valores) * 1.35)
-    ax[1].set_title("b) Error de calibración", fontsize=9.5)
+    ax[1].set_title("b) Error de calibración", fontsize=13.1)
     ax[1].xaxis.set_major_formatter(COMA)
     for a in ax:
         a.spines[["top", "right"]].set_visible(False)
-        a.tick_params(labelsize=8)
+        a.tick_params(labelsize=11.0)
     fig.tight_layout(pad=0.6)
     fig.savefig(args.salida / "calibracion.png")
     plt.close(fig)
 
     # --- Figura: sensibilidad al costo y comparación por protocolo ----------
-    fig, ax = plt.subplots(1, 2, figsize=(9.0, 3.4), dpi=200)
+    fig, ax = plt.subplots(1, 2, figsize=(9.0, 3.8), dpi=200)
     for modelo in predicciones:
         ruta = args.resultados / f"metricas_{modelo}.json"
         if not ruta.exists():
@@ -163,8 +162,8 @@ def main() -> None:
     ax[0].set_xscale("log")
     ax[0].set_xlabel("Costo de una alerta falsa")
     ax[0].set_ylabel("Costo total en desarrollo (miles)")
-    ax[0].set_title("a) Sensibilidad al costo de la alerta falsa", fontsize=9.5)
-    ax[0].legend(fontsize=6.8, frameon=False)
+    ax[0].set_title("a) Sensibilidad al costo de la alerta falsa", fontsize=13.1)
+    ax[0].legend(fontsize=9.4, frameon=False)
     ax[0].yaxis.set_major_formatter(COMA)
 
     etq, cv, pt = [], [], []
@@ -182,15 +181,15 @@ def main() -> None:
     ax[1].bar(pos + 0.19, pt, 0.36, label="Prueba temporal", color="#555555",
               ec="#333333", lw=0.9)
     ax[1].set_xticks(pos)
-    ax[1].set_xticklabels([e.replace(" ", "\n", 1) for e in etq], fontsize=7)
+    ax[1].set_xticklabels([e.replace(" ", "\n", 1) for e in etq], fontsize=9.7)
     ax[1].set_ylabel("AUPRC")
     ax[1].set_ylim(0, 1)
-    ax[1].legend(fontsize=6.8, frameon=False)
-    ax[1].set_title("b) AUPRC bajo los dos protocolos", fontsize=9.5)
+    ax[1].legend(fontsize=9.4, frameon=False)
+    ax[1].set_title("b) AUPRC bajo los dos protocolos", fontsize=13.1)
     ax[1].yaxis.set_major_formatter(COMA)
     for a in ax:
         a.spines[["top", "right"]].set_visible(False)
-        a.tick_params(labelsize=8)
+        a.tick_params(labelsize=11.0)
     fig.tight_layout(pad=0.6)
     fig.savefig(args.salida / "costo_y_protocolos.png")
     plt.close(fig)
@@ -206,7 +205,7 @@ def main() -> None:
             "mlp": "Perceptrón multicapa",
         }
         claves = [k for k in nombres if k in est]
-        fig, ax = plt.subplots(figsize=(7.4, 3.4), dpi=200)
+        fig, ax = plt.subplots(figsize=(7.6, 3.6), dpi=200)
         for i, k in enumerate(claves):
             v = est[k]["auprc"]
             ax.scatter(v, [i] * len(v), s=26, facecolor="white", ec="#333333",
@@ -216,13 +215,13 @@ def main() -> None:
                        lw=1.8, zorder=4)
             desv = f"{est[k]['desviacion']:.4f}".replace(".", ",")
             ax.text(1.005, i, f"desviación {desv}",
-                    transform=ax.get_yaxis_transform(), va="center", fontsize=7.2)
+                    transform=ax.get_yaxis_transform(), va="center", fontsize=9.9)
         ax.set_yticks(range(len(claves)))
-        ax.set_yticklabels([nombres[k] for k in claves], fontsize=8)
+        ax.set_yticklabels([nombres[k] for k in claves], fontsize=11.0)
         ax.set_xlim(0, 1)
         ax.set_xlabel("AUPRC sobre el mismo tramo de prueba")
         ax.set_title("Seis entrenamientos con el 80 % del desarrollo elegido al azar",
-                     fontsize=9.5, pad=8)
+                     fontsize=13.1, pad=8)
         ax.xaxis.set_major_formatter(COMA)
         ax.spines[["top", "right"]].set_visible(False)
         ax.invert_yaxis()
