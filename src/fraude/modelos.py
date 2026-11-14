@@ -52,9 +52,13 @@ def _lightgbm(semilla: int, **kw: Any):
     except ImportError as exc:  # pragma: no cover - depende del entorno
         raise ModeloNoDisponible("Falta lightgbm: pip install lightgbm") from exc
 
+    # No se activa `is_unbalance`. Reponderar la clase minoritaria satura las
+    # probabilidades: sobre el conjunto real deja miles de transacciones
+    # empatadas en 1.0 y hunde el AUPRC de 0.77 a 0.01, porque el orden en la
+    # cabeza de la lista desaparece. El desbalance se trata aguas abajo, al
+    # elegir el umbral por costo, que necesita una probabilidad bien ordenada.
     parametros = dict(n_estimators=500, learning_rate=0.05, num_leaves=31,
-                      subsample=0.8, colsample_bytree=0.8, random_state=semilla,
-                      is_unbalance=True, verbose=-1)
+                      colsample_bytree=0.8, random_state=semilla, verbose=-1)
     parametros.update(kw)
     return LGBMClassifier(**parametros)
 
