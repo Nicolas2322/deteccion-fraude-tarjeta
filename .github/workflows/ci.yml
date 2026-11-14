@@ -14,15 +14,17 @@ jobs:
         with:
           python-version: "3.11"
 
-      # El núcleo del pipeline no depende de LightGBM ni de PyTorch: la
-      # integración continua se mantiene ligera y se ejecuta en menos de un minuto.
+      # El núcleo del pipeline y la API no dependen de LightGBM ni de PyTorch:
+      # la integración continua se mantiene ligera y tarda menos de un minuto.
+      # Las pruebas de la arquitectura neuronal se omiten solas si falta torch.
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install numpy pandas scikit-learn pytest pytest-cov ruff
+          pip install numpy pandas scikit-learn joblib pytest pytest-cov ruff
+          pip install fastapi 'uvicorn[standard]' python-multipart httpx
 
       - name: Análisis estático
-        run: ruff check src tests scripts
+        run: ruff check src tests scripts app
 
       - name: Pruebas y cobertura
-        run: pytest --cov=src/fraude --cov-report=term-missing --cov-fail-under=85
+        run: pytest --cov=src/fraude --cov=app --cov-report=term-missing --cov-fail-under=85

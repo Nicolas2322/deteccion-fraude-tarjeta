@@ -203,6 +203,32 @@ sin reponderación, y exhaustividad nula porque el umbral por costo no encontrab
 ningún corte dentro del empate. Es el efecto que describen Dal Pozzolo et al.
 (2015): reponderar desplaza la probabilidad, y aquí la colapsó.
 
+## Interfaz web
+
+El detector se usa desde una interfaz pensada para un analista de fraude, no
+para un científico de datos: muestra una **acción** —bloquear, revisar o
+permitir— y no una probabilidad suelta.
+
+```
+python scripts/exportar.py datos/creditcard.csv --modelo mlp --costo 5
+uvicorn app.api:aplicacion --reload
+```
+
+| | |
+|---|---|
+| API y servidor | `app/api.py` |
+| Interfaz (HTML, CSS y JavaScript sin dependencias) | `app/web/` |
+| Lógica de decisión, independiente del transporte | `src/fraude/servicio.py` |
+| Artefacto del modelo, su escalador y su umbral | `app/servicio.joblib` |
+| Capturas generadas con un navegador real | `capturas/`, con `scripts/capturas.py` |
+
+El control principal no es un botón de «predecir» sino **el costo de una alerta
+falsa**: es el único parámetro que la institución conoce mejor que el modelo, y
+moverlo desplaza el umbral de decisión sobre la curva calculada al exportar. El
+front end no contiene lógica de negocio; toda decisión sobre qué significa una
+probabilidad vive en `fraude.servicio`, de modo que el modelo cambió tres veces
+durante el proyecto sin que la interfaz cambiara ninguna.
+
 ## Datos en el repositorio
 
 El archivo completo no está versionado: pesa unos 150 MB, por encima del límite
