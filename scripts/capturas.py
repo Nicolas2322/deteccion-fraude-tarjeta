@@ -16,7 +16,7 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-ANCHO, ALTO = 1340, 1000
+ANCHO, ALTO = 980, 1000
 
 
 def main() -> None:
