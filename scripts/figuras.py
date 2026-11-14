@@ -62,7 +62,10 @@ def diagrama_calibracion(y: np.ndarray, p: np.ndarray, n: int = 12):
     xs, ys = [], []
     for k in range(len(bordes) - 1):
         m = indice == k
-        if m.sum() >= 50:
+        # Se descartan los cubos sin ningún fraude: en escala logarítmica una
+        # frecuencia observada de cero no se puede representar, y con una
+        # prevalencia del 0,13 % los cubos bajos están casi todos vacíos.
+        if m.sum() >= 50 and y[m].sum() > 0:
             xs.append(p[m].mean())
             ys.append(y[m].mean())
     return np.array(xs), np.array(ys)
@@ -105,8 +108,8 @@ def main() -> None:
         a.yaxis.set_major_formatter(COMA)
     ax[0].set_ylabel("Precisión")
     ax[0].set_title("a) Curva completa", fontsize=9.5)
-    ax[0].text(0.52, base + 0.03, f"línea base: {base:.4f}".replace(".", ","),
-               fontsize=6.6, color="#777777")
+    ax[0].text(0.98, base + 0.035, f"línea base: {base:.4f}".replace(".", ","),
+               fontsize=6.6, color="#777777", ha="right")
     ax[1].set_xlim(0, 0.9)
     ax[1].set_ylim(0.4, 1.02)
     ax[1].set_title("b) Zona de operación", fontsize=9.5)
@@ -119,7 +122,7 @@ def main() -> None:
     fig, ax = plt.subplots(1, 2, figsize=(9.0, 3.4), dpi=200)
     for modelo, p in predicciones.items():
         xs, ys = diagrama_calibracion(y, p)
-        ax[0].plot(xs, ys, marker="o", ms=3.2, **ESTILOS[modelo], label=ETIQUETAS[modelo])
+        ax[0].plot(xs, ys, marker="o", ms=3.4, **ESTILOS[modelo], label=ETIQUETAS[modelo])
     lim = [1e-5, 1.0]
     ax[0].plot(lim, lim, color="#bbbbbb", lw=1.0, ls=(0, (1, 2)))
     ax[0].set_xscale("log")
@@ -127,7 +130,7 @@ def main() -> None:
     ax[0].set_xlabel("Probabilidad predicha media del cubo")
     ax[0].set_ylabel("Frecuencia observada")
     ax[0].set_title("a) Diagrama de calibración", fontsize=9.5)
-    ax[0].legend(fontsize=6.8, loc="upper left", frameon=False)
+    ax[0].legend(fontsize=6.8, loc="lower right", frameon=False)
 
     nombres = list(predicciones)
     valores = [error_calibracion(y, predicciones[m]) for m in nombres]
@@ -192,7 +195,43 @@ def main() -> None:
     fig.savefig(args.salida / "costo_y_protocolos.png")
     plt.close(fig)
 
-    print(f"Escritas 3 figuras en {args.salida}/ a partir de "
+    # --- Figura: estabilidad frente a la submuestra de entrenamiento -------
+    ruta_est = args.resultados / "estabilidad.json"
+    if ruta_est.exists():
+        est = json.loads(ruta_est.read_text(encoding="utf-8"))
+        nombres = {
+            "logistica": "Regresión logística",
+            "lightgbm_profundo": "LightGBM\n500 árboles, 31 hojas",
+            "lightgbm_regularizado": "LightGBM\n200 árboles, 15 hojas",
+            "mlp": "Perceptrón multicapa",
+        }
+        claves = [k for k in nombres if k in est]
+        fig, ax = plt.subplots(figsize=(7.4, 3.4), dpi=200)
+        for i, k in enumerate(claves):
+            v = est[k]["auprc"]
+            ax.scatter(v, [i] * len(v), s=26, facecolor="white", ec="#333333",
+                       lw=1.0, zorder=3)
+            ax.plot([min(v), max(v)], [i, i], color="#999999", lw=1.2, zorder=2)
+            ax.scatter([est[k]["media"]], [i], s=58, marker="|", color="#111111",
+                       lw=1.8, zorder=4)
+            desv = f"{est[k]['desviacion']:.4f}".replace(".", ",")
+            ax.text(1.005, i, f"desviación {desv}",
+                    transform=ax.get_yaxis_transform(), va="center", fontsize=7.2)
+        ax.set_yticks(range(len(claves)))
+        ax.set_yticklabels([nombres[k] for k in claves], fontsize=8)
+        ax.set_xlim(0, 1)
+        ax.set_xlabel("AUPRC sobre el mismo tramo de prueba")
+        ax.set_title("Seis entrenamientos con el 80 % del desarrollo elegido al azar",
+                     fontsize=9.5, pad=8)
+        ax.xaxis.set_major_formatter(COMA)
+        ax.spines[["top", "right"]].set_visible(False)
+        ax.invert_yaxis()
+        fig.tight_layout(pad=0.6)
+        fig.subplots_adjust(right=0.80)
+        fig.savefig(args.salida / "estabilidad.png")
+        plt.close(fig)
+
+    print(f"Escritas 4 figuras en {args.salida}/ a partir de "
           f"{len(predicciones)} modelos: {', '.join(predicciones)}")
     for modelo, p in predicciones.items():
         print(f"  {modelo:16s} AUPRC {auprc(y, p):.4f}  ROC {roc_auc(y, p):.4f}  "

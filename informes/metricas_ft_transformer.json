@@ -1,0 +1,82 @@
+{
+ "modelo": "ft_transformer",
+ "costo_alerta_falsa": 5.0,
+ "resumen_datos": {
+  "desarrollo": "227,846 transacciones | 417 fraudes (0.183%) | 40.3 h",
+  "prueba": "56,961 transacciones | 75 fraudes (0.132%) | 7.7 h"
+ },
+ "decision": {
+  "umbral": 0.3257944881916046,
+  "costo": 12275.00999999998,
+  "fraudes_no_detectados": 73,
+  "importe_no_detectado": 11845.01,
+  "alertas_falsas": 86
+ },
+ "validacion_cruzada": {
+  "auprc": 0.699833329794078,
+  "auprc_linea_base": 0.0018301835450260262,
+  "roc_auc": 0.9344377041358353,
+  "error_calibracion": 0.007711745247258963,
+  "umbral": 0.3257944881916046,
+  "exhaustividad": 0.8249400479616307,
+  "precision": 0.8,
+  "especificidad": 0.9996218600090577,
+  "fraudes_detectados": 344.0,
+  "fraudes_no_detectados": 73.0,
+  "alertas_falsas": 86.0,
+  "importe_no_detectado": 11845.01,
+  "costo_total": 12275.01
+ },
+ "prueba_temporal": {
+  "auprc": 0.7948974559683244,
+  "auprc_linea_base": 0.0013166903670932743,
+  "roc_auc": 0.9702518487266932,
+  "error_calibracion": 0.0004467806856321453,
+  "umbral": 0.3257944881916046,
+  "exhaustividad": 0.7066666666666667,
+  "precision": 0.828125,
+  "especificidad": 0.9998066308054706,
+  "fraudes_detectados": 53.0,
+  "fraudes_no_detectados": 22.0,
+  "alertas_falsas": 11.0,
+  "importe_no_detectado": 3923.060000000001,
+  "costo_total": 3978.060000000001
+ },
+ "sensibilidad": [
+  [
+   1.0,
+   0.027924148365855217,
+   11820.21999999998
+  ],
+  [
+   2.0,
+   0.3257944881916046,
+   12017.00999999998
+  ],
+  [
+   5.0,
+   0.3257944881916046,
+   12275.00999999998
+  ],
+  [
+   10.0,
+   0.3257944881916046,
+   12705.00999999998
+  ],
+  [
+   25.0,
+   0.3257944881916046,
+   13995.00999999998
+  ],
+  [
+   50.0,
+   0.3257944881916046,
+   16145.00999999998
+  ],
+  [
+   100.0,
+   0.3257944881916046,
+   20445.00999999998
+  ]
+ ]
+}
