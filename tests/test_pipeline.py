@@ -50,3 +50,30 @@ def test_el_resultado_se_serializa(resultado):
     import json
     texto = json.dumps(resultado.a_diccionario(), ensure_ascii=False)
     assert "validacion_cruzada" in texto
+
+
+def test_la_cache_reutiliza_las_predicciones(datos, tmp_path):
+    """Dos ejecuciones con caché deben dar exactamente el mismo resultado.
+
+    La caché solo evita recalcular; si alterase algo, la segunda ejecución
+    —que lee de disco en lugar de entrenar— diferiría de la primera.
+    """
+    from fraude.pipeline import ejecutar
+
+    a = ejecutar(datos, modelo="logistica", n_pliegues=3, cache=tmp_path)
+    archivos = sorted(p.name for p in tmp_path.glob("*.npy"))
+    assert len(archivos) == 4, "faltan los tres pliegues o la prueba temporal"
+
+    b = ejecutar(datos, modelo="logistica", n_pliegues=3, cache=tmp_path)
+    assert a.validacion_cruzada == b.validacion_cruzada
+    assert a.prueba_temporal == b.prueba_temporal
+    assert sorted(p.name for p in tmp_path.glob("*.npy")) == archivos
+
+
+def test_los_hiperparametros_llegan_al_modelo(datos):
+    """Pasar hiperparámetros debe cambiar el resultado, no ser ignorado."""
+    from fraude.pipeline import ejecutar
+
+    flojo = ejecutar(datos, modelo="logistica", n_pliegues=3, hiper={"C": 1e-4})
+    fuerte = ejecutar(datos, modelo="logistica", n_pliegues=3, hiper={"C": 100.0})
+    assert flojo.validacion_cruzada["auprc"] != fuerte.validacion_cruzada["auprc"]

@@ -24,11 +24,19 @@ def main() -> None:
     p.add_argument("--fraccion-prueba", type=float, default=0.2)
     p.add_argument("--semilla", type=int, default=42)
     p.add_argument("--salida", type=Path, default=Path("resultados"))
+    p.add_argument("--cache", type=Path, default=None,
+                   help="directorio donde guardar y reutilizar las predicciones por pliegue")
+    p.add_argument("--hiper", type=str, default=None,
+                   help="hiperparámetros del modelo en JSON, p. ej. '{\"d_token\": 32}'")
+    p.add_argument("--etiqueta", type=str, default=None,
+                   help="sufijo del archivo de salida; por defecto el nombre del modelo")
     args = p.parse_args()
 
     resultado = ejecutar(cargar(args.datos), modelo=args.modelo,
                          costo_alerta_falsa=args.costo, n_pliegues=args.pliegues,
-                         fraccion_prueba=args.fraccion_prueba, semilla=args.semilla)
+                         fraccion_prueba=args.fraccion_prueba, semilla=args.semilla,
+                         cache=args.cache,
+                         hiper=json.loads(args.hiper) if args.hiper else None)
 
     cv, pt = resultado.validacion_cruzada, resultado.prueba_temporal
     print(f"Modelo: {args.modelo}   costo de alerta falsa: {args.costo}")
@@ -42,7 +50,7 @@ def main() -> None:
     print(f"  Costo total en prueba        : {pt['costo_total']:.2f}")
 
     args.salida.mkdir(parents=True, exist_ok=True)
-    destino = args.salida / f"metricas_{args.modelo}.json"
+    destino = args.salida / f"metricas_{args.etiqueta or args.modelo}.json"
     destino.write_text(json.dumps(resultado.a_diccionario(), indent=1, ensure_ascii=False),
                        encoding="utf-8")
     print(f"\nEscrito {destino}")
