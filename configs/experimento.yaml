@@ -1,0 +1,24 @@
+# Configuración del experimento. Todo lo que cambia entre corridas vive aquí y
+# no repartido por el código, de modo que una corrida queda descrita por este
+# archivo más el identificador del commit.
+
+semilla: 42
+
+particion:
+  fraccion_prueba: 0.2      # último tramo del periodo, reservado como prueba
+  pliegues: 5               # validación cruzada estratificada sobre el desarrollo
+
+costo:
+  alerta_falsa: 5.0         # valor de referencia; la curva lo recorre
+  rejilla: [1.0, 2.0, 5.0, 10.0, 25.0, 50.0, 100.0]
+
+modelos:
+  - logistica               # línea base mínima
+  - lightgbm                # familia de árboles
+  - mlp                     # familia neuronal
+  # - ft_transformer        # fase de selección; requiere PyTorch
+
+busqueda:
+  # Mismo presupuesto para ambas familias: es la condición para que la
+  # comparación sea válida (Grinsztajn et al., 2022).
+  configuraciones_por_familia: 40
