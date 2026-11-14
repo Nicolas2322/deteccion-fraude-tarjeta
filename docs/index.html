@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<title>Detector de transacciones fraudulentas</title>
+<meta name="description" content="Demostración pública de un detector de transacciones fraudulentas con tarjeta: el modelo se ejecuta en el navegador.">
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+<header class="cabecera">
+  <div class="marca">
+    <span class="logo" aria-hidden="true"></span>
+    <div>
+      <h1>Detector de transacciones fraudulentas</h1>
+      <p class="sub">Revisión asistida de operaciones con tarjeta</p>
+    </div>
+  </div>
+  <dl class="estado" id="estado">
+    <div><dt>Modelo</dt><dd id="estado-modelo">—</dd></div>
+    <div><dt>Umbral vigente</dt><dd id="estado-umbral">—</dd></div>
+    <div><dt>Variables</dt><dd id="estado-columnas">—</dd></div>
+  </dl>
+</header>
+
+<main>
+
+  <aside class="aviso" role="note">
+    <p><strong>Demostración pública.</strong> El modelo se descarga y se ejecuta
+      íntegramente en este navegador: ninguna transacción sale de tu equipo y no
+      hay servidor que la reciba. Es la versión estática del proyecto; la versión
+      con servidor, pensada para un despliegue real, está en
+      <a href="https://github.com/Nicolas2322/deteccion-fraude-tarjeta">el repositorio</a>,
+      bajo <code>app/</code>.</p>
+  </aside>
+
+  <!-- ───────────── Control de costo ───────────── -->
+  <section class="tarjeta costo" aria-labelledby="t-costo">
+    <h2 id="t-costo">¿Cuánto cuesta bloquear una transacción legítima?</h2>
+    <p class="ayuda">
+      Es el único parámetro que la institución conoce mejor que el modelo. Moverlo
+      desplaza el umbral de decisión: cuanto más caro sea molestar a un cliente,
+      más seguro tiene que estar el sistema antes de bloquear.
+    </p>
+
+    <div class="costo-cuerpo">
+      <div class="costo-control">
+        <label for="costo">Costo de una alerta falsa</label>
+        <input type="range" id="costo" min="0.5" max="200" step="0.5" value="5"
+               aria-describedby="costo-valor">
+        <div class="escala"><span>0,5</span><span>50</span><span>100</span><span>200</span></div>
+        <output id="costo-valor" for="costo">5,0 unidades</output>
+      </div>
+
+      <div class="costo-efecto">
+        <p class="etiqueta">Umbral resultante</p>
+        <p class="numerote" id="umbral-vivo">—</p>
+        <p class="nota" id="umbral-nota">Se bloquea cuando la probabilidad de fraude
+          supera este valor.</p>
+      </div>
+
+      <figure class="curva">
+        <svg id="curva" viewBox="0 0 320 120" role="img"
+             aria-label="Curva del umbral óptimo frente al costo de una alerta falsa"></svg>
+        <figcaption>Umbral óptimo según el costo, calculado sobre el tramo de desarrollo</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ───────────── Pestañas ───────────── -->
+  <div class="pestanas" role="tablist" aria-label="Modo de trabajo">
+    <button role="tab" id="tab-una" aria-selected="true" aria-controls="panel-una">
+      Una transacción
+    </button>
+    <button role="tab" id="tab-lote" aria-selected="false" aria-controls="panel-lote">
+      Lote desde archivo
+    </button>
+  </div>
+
+  <!-- ───────────── Una transacción ───────────── -->
+  <section class="tarjeta" id="panel-una" role="tabpanel" aria-labelledby="tab-una">
+    <div class="fila-acciones">
+      <h2>Datos de la transacción</h2>
+      <div class="botones">
+        <button type="button" class="secundario" id="btn-ejemplo-legitima">
+          Cargar caso legítimo
+        </button>
+        <button type="button" class="secundario" id="btn-ejemplo-fraude">
+          Cargar caso de fraude
+        </button>
+        <button type="button" class="secundario" id="btn-limpiar">Limpiar</button>
+      </div>
+    </div>
+
+    <form id="formulario" novalidate>
+      <div class="campos-destacados">
+        <div class="campo">
+          <label for="Amount">Importe</label>
+          <input type="number" id="Amount" name="Amount" step="0.01" min="0"
+                 inputmode="decimal" required aria-describedby="ayuda-amount">
+          <small id="ayuda-amount">En la moneda de la operación. No admite negativos.</small>
+        </div>
+        <div class="campo">
+          <label for="Time">Segundos desde la primera operación</label>
+          <input type="number" id="Time" name="Time" step="1" min="0"
+                 inputmode="numeric" required aria-describedby="ayuda-time">
+          <small id="ayuda-time">El sistema deriva de aquí la hora del día.</small>
+        </div>
+      </div>
+
+      <details class="componentes" open>
+        <summary>Componentes V1 a V28 <span class="pista">(resultado del análisis de
+          componentes principales del procesador de pagos)</span></summary>
+        <div class="rejilla-v" id="rejilla-v"></div>
+      </details>
+
+      <div class="fila-enviar">
+        <button type="submit" class="principal">Evaluar transacción</button>
+        <p class="error" id="error-una" role="alert" hidden></p>
+      </div>
+    </form>
+
+    <div class="veredicto" id="veredicto" hidden aria-live="polite">
+      <div class="veredicto-cabecera">
+        <span class="sello" id="sello">—</span>
+        <div>
+          <p class="veredicto-titulo" id="veredicto-titulo">—</p>
+          <p class="veredicto-sub" id="veredicto-sub">—</p>
+        </div>
+      </div>
+      <dl class="cifras">
+        <div><dt>Probabilidad de fraude</dt><dd id="v-prob">—</dd></div>
+        <div><dt>Umbral aplicado</dt><dd id="v-umbral">—</dd></div>
+        <div><dt>Margen respecto al umbral</dt><dd id="v-margen">—</dd></div>
+        <div><dt>Riesgo esperado</dt><dd id="v-riesgo">—</dd></div>
+      </dl>
+      <div class="barra" aria-hidden="true">
+        <div class="barra-umbral" id="barra-umbral"></div>
+        <div class="barra-valor" id="barra-valor"></div>
+      </div>
+      <p class="nota" id="v-explicacion"></p>
+    </div>
+  </section>
+
+  <!-- ───────────── Lote ───────────── -->
+  <section class="tarjeta" id="panel-lote" role="tabpanel" aria-labelledby="tab-lote" hidden>
+    <h2>Revisar un archivo de transacciones</h2>
+    <p class="ayuda">
+      El archivo debe ser un CSV con las 30 columnas del esquema: <code>Time</code>,
+      <code>V1</code> a <code>V28</code> y <code>Amount</code>. La columna
+      <code>Class</code> es opcional y se ignora. Máximo 20.000 filas por envío.
+    </p>
+
+    <div class="soltar" id="soltar" tabindex="0" role="button"
+         aria-describedby="ayuda-soltar">
+      <p class="soltar-titulo">Arrastra el CSV aquí o pulsa para elegirlo</p>
+      <p class="soltar-sub" id="ayuda-soltar">Se procesa en el servidor y no se
+        almacena ninguna transacción.</p>
+      <input type="file" id="archivo" accept=".csv,text/csv" hidden>
+    </div>
+    <p class="error" id="error-lote" role="alert" hidden></p>
+
+    <div id="resultado-lote" hidden aria-live="polite">
+      <div class="resumen">
+        <div class="caja bloquear"><p class="etiqueta">Bloquear</p>
+          <p class="numerote" id="r-bloquear">—</p></div>
+        <div class="caja revisar"><p class="etiqueta">Revisar</p>
+          <p class="numerote" id="r-revisar">—</p></div>
+        <div class="caja permitir"><p class="etiqueta">Permitir</p>
+          <p class="numerote" id="r-permitir">—</p></div>
+        <div class="caja"><p class="etiqueta">Importe bloqueado</p>
+          <p class="numerote" id="r-importe">—</p></div>
+        <div class="caja"><p class="etiqueta">Riesgo que pasa</p>
+          <p class="numerote" id="r-riesgo">—</p>
+          <p class="nota">Suma de probabilidad por importe de lo que se deja pasar</p></div>
+      </div>
+
+      <h3>Cola de revisión, ordenada por riesgo</h3>
+      <p class="ayuda">El orden no es por probabilidad sino por probabilidad
+        multiplicada por importe: una operación dudosa de cuantía alta merece
+        atención antes que una muy sospechosa de dos unidades.</p>
+      <div class="tabla-envoltorio">
+        <table id="tabla-lote">
+          <thead><tr>
+            <th scope="col">Fila</th><th scope="col">Acción</th>
+            <th scope="col">Probabilidad</th><th scope="col">Importe</th>
+            <th scope="col">Riesgo esperado</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>Proyecto académico — Universidad de Cundinamarca.
+     Código en <a href="https://github.com/Nicolas2322/deteccion-fraude-tarjeta">
+     github.com/Nicolas2322/deteccion-fraude-tarjeta</a></p>
+  <p class="nota">El sistema asiste la decisión de un analista y no la sustituye.</p>
+</footer>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
