@@ -1,0 +1,82 @@
+{
+ "modelo": "logistica",
+ "costo_alerta_falsa": 5.0,
+ "resumen_datos": {
+  "desarrollo": "227,846 transacciones | 417 fraudes (0.183%) | 40.3 h",
+  "prueba": "56,961 transacciones | 75 fraudes (0.132%) | 7.7 h"
+ },
+ "decision": {
+  "umbral": 0.9998344855616059,
+  "costo": 12749.970000000016,
+  "fraudes_no_detectados": 77,
+  "importe_no_detectado": 12244.97,
+  "alertas_falsas": 101
+ },
+ "validacion_cruzada": {
+  "auprc": 0.7288604577902711,
+  "auprc_linea_base": 0.0018301835450260262,
+  "roc_auc": 0.9756088476153724,
+  "error_calibracion": 0.07506979966341033,
+  "umbral": 0.9998344855616059,
+  "exhaustividad": 0.815347721822542,
+  "precision": 0.7709750566893424,
+  "especificidad": 0.9995559053594748,
+  "fraudes_detectados": 340.0,
+  "fraudes_no_detectados": 77.0,
+  "alertas_falsas": 101.0,
+  "importe_no_detectado": 12244.97,
+  "costo_total": 12749.97
+ },
+ "prueba_temporal": {
+  "auprc": 0.7576251218520704,
+  "auprc_linea_base": 0.0013166903670932743,
+  "roc_auc": 0.9855511022044088,
+  "error_calibracion": 0.11086398091839335,
+  "umbral": 0.9998344855616059,
+  "exhaustividad": 0.7333333333333333,
+  "precision": 0.7432432432432432,
+  "especificidad": 0.9996659986639946,
+  "fraudes_detectados": 55.0,
+  "fraudes_no_detectados": 20.0,
+  "alertas_falsas": 19.0,
+  "importe_no_detectado": 2887.1299999999997,
+  "costo_total": 2982.1299999999997
+ },
+ "sensibilidad": [
+  [
+   1.0,
+   0.6805376810246403,
+   10279.10000000002
+  ],
+  [
+   2.0,
+   0.9346529585087079,
+   11957.330000000016
+  ],
+  [
+   5.0,
+   0.9998344855616059,
+   12749.970000000016
+  ],
+  [
+   10.0,
+   0.9998344855616059,
+   13254.970000000016
+  ],
+  [
+   25.0,
+   0.9999814544966569,
+   14612.560000000012
+  ],
+  [
+   50.0,
+   0.9999859103866412,
+   16519.740000000013
+  ],
+  [
+   100.0,
+   0.9999859103866412,
+   20219.740000000013
+  ]
+ ]
+}

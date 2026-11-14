@@ -135,12 +135,45 @@ de negocio, y el conjunto está ya rotado, lo que según Grinsztajn et al. (2022
 debería reducir la ventaja que los árboles obtienen de la alineación con los ejes.
 El proyecto pone esa predicción a prueba.
 
+## Resultados medidos
+
+Ejecución sobre el archivo real, costo de alerta falsa igual a cinco. Los
+informes completos están en `informes/`, generados por el propio pipeline.
+
+| | Regresión logística | LightGBM |
+|---|---|---|
+| AUPRC, validación cruzada | 0,7289 | 0,4493 |
+| AUPRC, prueba temporal | 0,7576 | 0,7719 |
+| AUPRC de la línea base en prueba | 0,0013 | 0,0013 |
+| ROC-AUC, prueba temporal | 0,9856 | 0,9806 |
+| Error de calibración, prueba temporal | 0,1109 | 0,0006 |
+| Fraudes detectados en prueba (de 75) | 55 | 50 |
+| Alertas falsas en prueba | 19 | 8 |
+| Costo total en prueba | 2.982,13 | 2.727,14 |
+
+Ningún modelo ha recibido todavía búsqueda de hiperparámetros, de modo que la
+comparación no es concluyente.
+
+La prevalencia del fraude no es uniforme en el periodo: 0,183 % en el tramo de
+desarrollo y 0,132 % en el tramo de prueba. Por eso cada AUPRC se reporta junto
+a su propia línea base.
+
+### Por qué LightGBM no reponderara la clase minoritaria
+
+Activar `is_unbalance` saturaba las probabilidades: 3.013 transacciones del
+tramo de prueba empatadas en exactamente 1,0, AUPRC de 0,0147 frente a 0,7719
+sin reponderación, y exhaustividad nula porque el umbral por costo no encontraba
+ningún corte dentro del empate. El daño era invisible para la exactitud (99,8 %)
+y casi invisible para el ROC-AUC (0,854). Es el efecto que describen Dal Pozzolo
+et al. (2015): reponderar desplaza la probabilidad, y aquí la colapsó.
+
 ## Estado
 
-Fase de pipeline completada: recolección, validación, preprocesamiento,
-particionamiento, umbral, métricas y orquestación, con la línea base lineal
-funcionando de extremo a extremo. Pendientes la familia de árboles con búsqueda
-de hiperparámetros, FT-Transformer y el análisis comparativo final.
+Fase de pipeline completada y ejecutada sobre el archivo real: recolección,
+validación, preprocesamiento, particionamiento, umbral, métricas y orquestación,
+con dos modelos de familias distintas funcionando de extremo a extremo.
+Pendientes la red neuronal tabular, FT-Transformer, la búsqueda de
+hiperparámetros común y el análisis comparativo final.
 
 ## Referencias
 

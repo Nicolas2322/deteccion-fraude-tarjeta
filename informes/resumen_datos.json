@@ -1,0 +1,23 @@
+{
+ "completo": {
+  "filas": 284807,
+  "fraudes": 492,
+  "prevalencia": 0.001727485630620034,
+  "importe_total_fraude": 60127.97,
+  "duracion_horas": 47.99777777777778
+ },
+ "desarrollo": {
+  "filas": 227846,
+  "fraudes": 417,
+  "prevalencia": 0.0018301835450260262,
+  "importe_total_fraude": 52398.71000000001,
+  "duracion_horas": 40.346666666666664
+ },
+ "prueba": {
+  "filas": 56961,
+  "fraudes": 75,
+  "prevalencia": 0.0013166903670932743,
+  "importe_total_fraude": 7729.26,
+  "duracion_horas": 7.650833333333333
+ }
+}
