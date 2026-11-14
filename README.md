@@ -203,6 +203,28 @@ sin reponderación, y exhaustividad nula porque el umbral por costo no encontrab
 ningún corte dentro del empate. Es el efecto que describen Dal Pozzolo et al.
 (2015): reponderar desplaza la probabilidad, y aquí la colapsó.
 
+## Datos en el repositorio
+
+El archivo completo no está versionado: pesa unos 150 MB, por encima del límite
+de 100 MB por archivo de GitHub, y mezclar datos con código dificulta saber qué
+versión de cada cosa produjo un resultado. El repositorio versiona en su lugar:
+
+| Qué | Dónde |
+|---|---|
+| Muestra de 5.000 transacciones con los 492 fraudes | `datos_muestra/` |
+| Procedimiento de descarga del archivo completo | `datos_muestra/README.md` |
+| Validación del esquema al cargar | `src/fraude/datos.py` |
+| Informes con todas las métricas publicadas | `informes/` |
+| Figuras de los documentos de avance | `figuras/` |
+
+La muestra **no es representativa** (prevalencia del 9,84 % frente al 0,173 %
+real) y no sirve para reproducir métricas; sirve para inspeccionar el esquema y
+ejecutar el pipeline sin descargar nada. Su `README.md` lo explica.
+
+Las pruebas automatizadas no usan ni la muestra ni el archivo completo: generan
+conjuntos sintéticos con el mismo esquema, de modo que clonar el repositorio y
+verificarlo entero cuesta menos de un minuto.
+
 ## Estado
 
 Pipeline completo y ejecutado sobre el archivo real con cuatro modelos de tres
